@@ -7,16 +7,20 @@ import {
   Wrapper
 } from '@vue/test-utils'
 import { compileToFunctions } from 'vue-template-compiler'
+import { rafPolyfill } from '../../../../test'
 
 describe('VAutocomplete.ts', () => {
   type Instance = InstanceType<typeof VAutocomplete>
   let mountFunction: (options?: object) => Wrapper<Instance>
   let el
 
+  rafPolyfill(window)
+
   beforeEach(() => {
     el = document.createElement('div')
     el.setAttribute('data-app', 'true')
     document.body.appendChild(el)
+
     mountFunction = (options = {}) => {
       return mount(VAutocomplete, {
         ...options,
@@ -32,6 +36,38 @@ describe('VAutocomplete.ts', () => {
         }
       })
     }
+  })
+
+  it('should not remove a disabled item', () => {
+    const wrapper = mountFunction({
+      propsData: {
+        chips: true,
+        multiple: true,
+        items: [
+          { text: 'foo', value: 'foo', disabled: true },
+          { text: 'bar', value: 'bar' }
+        ],
+        value: ['foo', 'bar']
+      }
+    })
+
+    const chips = wrapper.find('.v-chip')
+    const input = wrapper.find('input')
+
+    expect(chips[0].element.classList.contains('v-chip--disabled')).toBe(true)
+
+    input.trigger('focus')
+    input.trigger('keydown.left')
+
+    expect(wrapper.vm.selectedIndex).toBe(1)
+
+    input.trigger('keydown.delete')
+
+    expect(wrapper.vm.internalValue).toEqual(['foo'])
+
+    input.trigger('keydown.delete')
+
+    expect(wrapper.vm.internalValue).toEqual(['foo'])
   })
 
   it('should not filter results', async () => {

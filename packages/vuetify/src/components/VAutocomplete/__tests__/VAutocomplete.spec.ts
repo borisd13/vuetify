@@ -3,6 +3,7 @@ import VAutocomplete from '../VAutocomplete'
 
 // Utilities
 import { keyCodes } from '../../../util/helpers'
+import { rafPolyfill } from '../../../../test'
 import {
   mount,
   Wrapper
@@ -13,10 +14,13 @@ describe('VAutocomplete.ts', () => {
   let mountFunction: (options?: object) => Wrapper<Instance>
   let el
 
+  rafPolyfill(window)
+
   beforeEach(() => {
     el = document.createElement('div')
     el.setAttribute('data-app', 'true')
     document.body.appendChild(el)
+
     mountFunction = (options = {}) => {
       return mount(VAutocomplete, {
         ...options,
@@ -505,37 +509,5 @@ describe('VAutocomplete.ts', () => {
     expect(wrapper.vm.isMenuActive).toBe(true)
 
     expect(wrapper.vm.getMenuIndex()).toBe(-1)
-  })
-
-  it('should not remove a disabled item', () => {
-    const wrapper = mountFunction({
-      propsData: {
-        chips: true,
-        multiple: true,
-        items: [
-          { text: 'foo', value: 'foo', disabled: true },
-          { text: 'bar', value: 'bar' }
-        ],
-        value: ['foo', 'bar']
-      }
-    })
-
-    const chips = wrapper.find('.v-chip')
-    const input = wrapper.find('input')
-
-    expect(chips[0].element.classList.contains('v-chip--disabled')).toBe(true)
-
-    input.trigger('focus')
-    input.trigger('keydown.left')
-
-    expect(wrapper.vm.selectedIndex).toBe(1)
-
-    input.trigger('keydown.delete')
-
-    expect(wrapper.vm.internalValue).toEqual(['foo'])
-
-    input.trigger('keydown.delete')
-
-    expect(wrapper.vm.internalValue).toEqual(['foo'])
   })
 })
